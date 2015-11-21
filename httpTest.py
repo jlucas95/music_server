@@ -3,15 +3,17 @@ import collection_reader as cr
 from player import Player
 import json.encoder as json
 from urllib.request import unquote
+
 __author__ = 'Jan'
 
-ADRESS = '127.0.0.1'
-PORT = 80
+ADRESS = ''
+PORT = 8000
 
 collection = cr.MusicCollection(cr.map_songs(cr.rootfolder))
 print("collection built")
 
 music = Player()
+
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -20,7 +22,7 @@ class handler(BaseHTTPRequestHandler):
         elif self.path.startswith("/songs"):
             self.send_songs()
         elif self.path == "/":
-            self.standardResponse()
+            self.standard_response()
         elif self.path.startswith("/css"):
             path = self.path[1:len(self.path)]
             with open(path) as file:
@@ -29,6 +31,13 @@ class handler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "text/css")
                 self.end_headers()
                 self.wfile.write(data.encode())
+        elif self.path.startswith("/font"):
+            path = self.path[1:len(self.path)]
+            with open(path, "rb") as file:
+                data = file.read()
+                self.send_response(200)
+                self.wfile.write(data)
+
         else:
             print('could not find')
             self.send_error(404, "File not found")
@@ -42,11 +51,9 @@ class handler(BaseHTTPRequestHandler):
     def do_PUT(self):
         # TODO rewrite elifs to function dictionary
         if self.path == "/rebuild":
-            self.send_response(200)
-            global collection
-            collection= collection.rebuild()
+            collection.rebuild()
         elif self.path == "/play":
-                self.resume_song()
+            self.resume_song()
         elif self.path.startswith("/play"):
             path = self.path.split("/")
             artist = unquote(path[2])
@@ -67,16 +74,15 @@ class handler(BaseHTTPRequestHandler):
             self.decrease_volume()
         elif self.path == "/volume/up":
             self.increase_volume()
-        self.end_request()
+        self.end()
 
-    def standardResponse(self):
+    def standard_response(self):
         with open("page.html") as page:
             data = page.read()
             self.send_response(200)
             self.wfile.write(data.encode())
 
     def send_artists(self):
-        self.send_response(200)
         data = [x.name for x in collection.artists]
         encoder = json.JSONEncoder()
         data = encoder.encode(data)
@@ -84,7 +90,7 @@ class handler(BaseHTTPRequestHandler):
 
     def send_songs(self):
         seperated_path = self.path.split('/')
-        artist = unquote(seperated_path[len(seperated_path)-1])
+        artist = unquote(seperated_path[len(seperated_path) - 1])
         artist = collection.get_artist(artist)
         songs = [x.name for x in artist.songs]
         encoder = json.JSONEncoder()
@@ -116,8 +122,9 @@ class handler(BaseHTTPRequestHandler):
     def next_song(self):
         music.next()
 
-    def end_request(self):
+    def end(self):
         self.send_response(200)
+        self.end_headers()
         self.wfile.write(b'1')
 
     def decrease_volume(self):
@@ -125,6 +132,7 @@ class handler(BaseHTTPRequestHandler):
 
     def increase_volume(self):
         music.increase_volume()
+
 
 if __name__ == "__main__":
     print("starting server")

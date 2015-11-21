@@ -12,7 +12,7 @@ class Player:
         self.list_player = vlc.MediaListPlayer()
         self.list_player.set_media_list(self.mediaList)
         self.list_player.set_media_player(self.player)
-        self.level = 100
+        self.level = 80
         self.volume_interval = 5
 
     def clearList(self):
