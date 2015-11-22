@@ -9,7 +9,7 @@ music = player.Player()
 
 
 song = cr.Song('music/02 Free Will Sacrifice.mp3')
-music.new_song(song.path)
+music.add_song(song.path)
 print("playing")
 music.play()
 input()

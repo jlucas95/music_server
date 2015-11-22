@@ -20,7 +20,7 @@
 
 </head>
 <body>
-<div class="btn-group">
+<div class="btn-group" style="margin-top:5px;">
     <button class="btn btn-primary btn-lg" style="margin-left:5px" onclick="play()"><span class="glyphicon glyphicon-play"></span></button>
     <button class="btn btn-primary btn-lg" onclick="pause()"><span class="glyphicon glyphicon-pause"></span></button>
     <button class="btn btn-primary btn-lg" onclick="stop()"><span class="glyphicon glyphicon-stop"></span></button>
@@ -41,7 +41,11 @@
         <ul class="list-group" id="artists">
         </ul>
     </div>
-    <div class="col-sm-4">
+    <div class="col-sm-3">
+        <ul id="albums" class="list-group">
+        </ul>
+    </div>
+    <div class="col-sm-3">
         <ul id="songs" class="list-group">
         </ul>
     </div>
@@ -64,7 +68,7 @@ request.onreadystatechange = function() { //Call a function when the state chang
             var listItem = document.createElement("li");
             listItem.className = "list-group-item"
             var name = document.createTextNode(item);
-            listItem.onclick = getSongs;
+            listItem.onclick = getAlbums;
             listItem.appendChild(name);
             artists.appendChild(listItem);
         });
@@ -74,17 +78,41 @@ request.send();
 
 
 
-var selectedArtist = ''
+var selectedArtist = '';
+var selectedAlbum = '';
+
+function getAlbums() {
+    selectedArtist = this.innerHTML;
+    var albumRequest = new XMLHttpRequest();
+    albumRequest.open("GET", document.URL + "albums/" + selectedArtist);
+    albumRequest.onreadystatechange = function() {
+        if(albumRequest.readyState == 4 && albumRequest.status == 200){
+            data = JSON.parse(albumRequest.response);
+            albumList = document.getElementById("albums");
+            albumList.innerHTML = "";
+            songList = document.getElementById("songs");
+            songList.innerHTML = "";
+            data.forEach(function(item){
+                listItem = document.createElement("li");
+                listItem.className = "list-group-item";
+                listItem.innerHTML = item;
+                listItem.onclick = getSongs;
+                albumList.appendChild(listItem);
+            });
+        }
+    }
+    albumRequest.send();
+}
+
 
 function getSongs() {
-    selectedArtist = this.innerHTML;
+    selectedAlbum = this.innerHTML;
     var songRequest = new XMLHttpRequest();
-    songRequest.open("GET", document.URL + "songs/" + this.innerHTML)
+    songRequest.open("GET", document.URL + "songs/" + selectedArtist + "/" + selectedAlbum)
     songRequest.onreadystatechange = function() { //Call a function when the state changes.
         if (songRequest.readyState == 4 && songRequest.status == 200) {
             data = JSON.parse(songRequest.response);
             songList = document.getElementById("songs");
-
             songList.innerHTML = "";
             data.forEach(function(item) {
                 // should create the following structure:
@@ -149,8 +177,9 @@ function playSong() {
     // TODO fix ugly namegetting
     var song = this.parentNode.parentNode.getElementsByClassName("song")[0].innerText;
     var artist = selectedArtist;
+    var album = selectedAlbum;
     var playRequest = new XMLHttpRequest();
-    playRequest.open("PUT", document.URL + "play/" + artist + "/" + song);
+    playRequest.open("PUT", document.URL + "play/" + artist + "/" + album + "/"+ song);
     playRequest.send();
 }
 
@@ -159,7 +188,7 @@ function addSong(){
     var song = this.parentNode.parentNode.getElementsByClassName("song")[0].innerText;
     var artist = selectedArtist;
     var addRequest = new XMLHttpRequest();
-    addRequest.open("PUT", document.URL + "add" + "/" + artist + "/" + song)
+    playRequest.open("PUT", document.URL + "play/" + artist + "/" + album + "/"+ song);
     addRequest.send();
 }
 

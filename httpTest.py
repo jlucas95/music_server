@@ -19,6 +19,8 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/artists":
             self.send_artists()
+        elif self.path.startswith("/albums"):
+            self.send_albums()
         elif self.path.startswith("/songs"):
             self.send_songs()
         elif self.path == "/":
@@ -37,6 +39,11 @@ class handler(BaseHTTPRequestHandler):
                 data = file.read()
                 self.send_response(200)
                 self.wfile.write(data)
+        elif self.path.startswith("/favicon.ico"):
+            self.send_response(200)
+            with open("favicon.ico", "rb") as icon:
+                self.end_headers()
+                self.wfile.write(icon.read())
 
         else:
             print('could not find')
@@ -57,13 +64,15 @@ class handler(BaseHTTPRequestHandler):
         elif self.path.startswith("/play"):
             path = self.path.split("/")
             artist = unquote(path[2])
-            song = unquote(path[3])
-            self.play_song(artist, song)
+            album = unquote(path[3])
+            song = unquote(path[4])
+            self.play_song(artist, album, song)
         elif self.path.startswith("/add"):
             path = self.path.split("/")
             artist = unquote(path[2])
-            song = unquote(path[3])
-            self.add_song(artist, song)
+            album = unquote(path[3])
+            song = unquote(path[4])
+            self.add_song(artist, album, song)
         elif self.path == "/pause":
             self.pause_song()
         elif self.path == "/stop":
@@ -88,26 +97,49 @@ class handler(BaseHTTPRequestHandler):
         data = encoder.encode(data)
         self.wfile.write(data.encode())
 
-    def send_songs(self):
+    def send_albums(self):
+        # Path will be something like albums/artist
         seperated_path = self.path.split('/')
         artist = unquote(seperated_path[len(seperated_path) - 1])
         artist = collection.get_artist(artist)
-        songs = [x.name for x in artist.songs]
+        albums = [x.name for x in artist.albums]
+        encoder = json.JSONEncoder()
+        albums = encoder.encode(albums)
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(albums.encode())
+
+    def send_songs(self):
+        # Path will be something like songs/artist/album
+        seperated_path = self.path.split('/')
+        # Get artist
+        artist = unquote(seperated_path[len(seperated_path) - 2])
+        artist = collection.get_artist(artist)
+        # Get album
+        album = unquote(seperated_path[len(seperated_path) - 1])
+        album = artist.find_album(album)
+        # get all the songs
+        songs = [x.name for x in album.songs]
+        # Encode the list into JSON
         encoder = json.JSONEncoder()
         songs = encoder.encode(songs)
+        # Send the songs
         self.send_response(200)
+        self.end_headers()
         self.wfile.write(songs.encode())
 
-    def play_song(self, artist, song):
+    def play_song(self, artist, album, song):
         artist = collection.get_artist(artist)
-        song = artist.find_song(song)
+        album = artist.find_album(album)
+        song = album.find_song(song)
         music.stop()
         music.clearList()
         music.add_song(song.path)
 
-    def add_song(self, artist, song):
+    def add_song(self, artist, album, song):
         artist = collection.get_artist(artist)
-        song = artist.find_song(song)
+        album = artist.find_album(album)
+        song = album.find_song(song)
         music.add_song(song.path)
 
     def stop_song(self):
