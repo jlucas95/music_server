@@ -7,7 +7,7 @@ from urllib.request import unquote
 __author__ = 'Jan'
 
 ADRESS = ''
-PORT = 8000
+PORT = 80
 
 collection = cr.MusicCollection(cr.map_songs(cr.rootfolder))
 print("collection built")
@@ -35,10 +35,15 @@ class handler(BaseHTTPRequestHandler):
                 self.wfile.write(data.encode())
         elif self.path.startswith("/font"):
             path = self.path[1:len(self.path)]
-            with open(path, "rb") as file:
-                data = file.read()
-                self.send_response(200)
-                self.wfile.write(data)
+            if path.endswith("?"):
+                path = path [0:len(path)-1]
+            try:
+                with open(path, "rb") as file:
+                    data = file.read()
+                    self.send_response(200)
+                    self.wfile.write(data)
+            except OSError:
+                self.send_error(404, "File not found")
         elif self.path.startswith("/favicon.ico"):
             self.send_response(200)
             with open("favicon.ico", "rb") as icon:
@@ -62,17 +67,9 @@ class handler(BaseHTTPRequestHandler):
         elif self.path == "/play":
             self.resume_song()
         elif self.path.startswith("/play"):
-            path = self.path.split("/")
-            artist = unquote(path[2])
-            album = unquote(path[3])
-            song = unquote(path[4])
-            self.play_song(artist, album, song)
+            self.play_song()
         elif self.path.startswith("/add"):
-            path = self.path.split("/")
-            artist = unquote(path[2])
-            album = unquote(path[3])
-            song = unquote(path[4])
-            self.add_song(artist, album, song)
+            self.add_song()
         elif self.path == "/pause":
             self.pause_song()
         elif self.path == "/stop":
@@ -111,12 +108,12 @@ class handler(BaseHTTPRequestHandler):
 
     def send_songs(self):
         # Path will be something like songs/artist/album
-        seperated_path = self.path.split('/')
+        separated_path = self.path.split('/')
         # Get artist
-        artist = unquote(seperated_path[len(seperated_path) - 2])
+        artist = unquote(separated_path[len(separated_path) - 2])
         artist = collection.get_artist(artist)
         # Get album
-        album = unquote(seperated_path[len(seperated_path) - 1])
+        album = unquote(separated_path[len(separated_path) - 1])
         album = artist.find_album(album)
         # get all the songs
         songs = [x.name for x in album.songs]
@@ -128,18 +125,34 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(songs.encode())
 
-    def play_song(self, artist, album, song):
+    def play_song(self):
+        # Get information from the path
+        path = self.path.split("/")
+        artist = unquote(path[2])
+        album = unquote(path[3])
+        song = unquote(path[4])
+        # Get the corresponding objects
         artist = collection.get_artist(artist)
         album = artist.find_album(album)
         song = album.find_song(song)
+        # stop current music
         music.stop()
+        # Clear the song queue
         music.clearList()
+        # Add the song to the queue
         music.add_song(song.path)
 
-    def add_song(self, artist, album, song):
+    def add_song(self):
+        # Get stuff out of the URL
+        path = self.path.split("/")
+        artist = unquote(path[2])
+        album = unquote(path[3])
+        song = unquote(path[4])
+        # Get the corresponding objects
         artist = collection.get_artist(artist)
         album = artist.find_album(album)
         song = album.find_song(song)
+        # Add the song to the queue
         music.add_song(song.path)
 
     def stop_song(self):

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title></title>
+    <title>Music Player</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
 	<script type="text/javascript">
 
@@ -34,18 +34,15 @@
 <br>
 
 <div class="row">
-    <div class="col-sm-1">
-        <!--spacer-->
-    </div>
-    <div class="col-sm-2">
+    <div class="col-xs-3">
         <ul class="list-group" id="artists">
         </ul>
     </div>
-    <div class="col-sm-3">
+    <div class="col-xs-3">
         <ul id="albums" class="list-group">
         </ul>
     </div>
-    <div class="col-sm-3">
+    <div class="col-xs-3">
         <ul id="songs" class="list-group">
         </ul>
     </div>
@@ -82,6 +79,17 @@ var selectedArtist = '';
 var selectedAlbum = '';
 
 function getAlbums() {
+    artistList = document.getElementById("artists");
+    var children = [].slice.call(artistList.children);
+
+    children.forEach(function(child){
+        if(child.classList.contains("active")){
+            child.classList.remove("active");
+        }
+    });
+    this.classList.add("active");
+
+
     selectedArtist = this.innerHTML;
     var albumRequest = new XMLHttpRequest();
     albumRequest.open("GET", document.URL + "albums/" + selectedArtist);
@@ -106,6 +114,16 @@ function getAlbums() {
 
 
 function getSongs() {
+    artistList = document.getElementById("albums");
+    var children = [].slice.call(artistList.children);
+
+    children.forEach(function(child){
+        if(child.classList.contains("active")){
+            child.classList.remove("active");
+        }
+    });
+    this.classList.add("active");
+
     selectedAlbum = this.innerHTML;
     var songRequest = new XMLHttpRequest();
     songRequest.open("GET", document.URL + "songs/" + selectedArtist + "/" + selectedAlbum)
@@ -186,9 +204,10 @@ function playSong() {
 function addSong(){
     // TODO fix ugly namegetting
     var song = this.parentNode.parentNode.getElementsByClassName("song")[0].innerText;
+    var album = selectedAlbum;
     var artist = selectedArtist;
     var addRequest = new XMLHttpRequest();
-    playRequest.open("PUT", document.URL + "play/" + artist + "/" + album + "/"+ song);
+    addRequest.open("PUT", document.URL + "add/" + artist + "/" + album + "/"+ song);
     addRequest.send();
 }
 
