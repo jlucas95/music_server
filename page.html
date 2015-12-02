@@ -4,29 +4,35 @@
     <meta charset="UTF-8">
     <title>Music Player</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
-	<script type="text/javascript">
+    <link href="css/custom.css" rel="stylesheet">
+    <script type="text/javascript">
 
-(function() { 
-    if ("-ms-user-select" in document.documentElement.style && navigator.userAgent.match(/IEMobile\/10\.0/)) { 
-        var msViewportStyle = document.createElement("style"); 
-        msViewportStyle.appendChild( 
-            document.createTextNode("@-ms-viewport{width:auto!important}") 
-        ); 
-        document.getElementsByTagName("head")[0].appendChild(msViewportStyle); 
-    } 
-})(); 
+(function() {
+    if ("-ms-user-select" in document.documentElement.style && navigator.userAgent.match(/IEMobile\/10\.0/)) {
+        var msViewportStyle = document.createElement("style");
+        msViewportStyle.appendChild(
+            document.createTextNode("@-ms-viewport{width:auto!important}")
+        );
+        document.getElementsByTagName("head")[0].appendChild(msViewportStyle);
+    }
+})();
 
-</script>
+
+    </script>
 
 </head>
 <body>
 <div class="btn-group" style="margin-top:5px;">
-    <button class="btn btn-primary btn-lg" style="margin-left:5px" onclick="play()"><span class="glyphicon glyphicon-play"></span></button>
+    <button class="btn btn-primary btn-lg" style="margin-left:5px" onclick="play()"><span
+            class="glyphicon glyphicon-play"></span></button>
     <button class="btn btn-primary btn-lg" onclick="pause()"><span class="glyphicon glyphicon-pause"></span></button>
     <button class="btn btn-primary btn-lg" onclick="stop()"><span class="glyphicon glyphicon-stop"></span></button>
-    <button class="btn btn-primary btn-lg" onclick="next()"><span class="glyphicon glyphicon-step-forward"></span></button>
-    <button class="btn btn-primary btn-lg" onclick="dec_vol()"><span class="glyphicon glyphicon-volume-down"></span></button>
-    <button class="btn btn-primary btn-lg" onclick="inc_vol()"><span class="glyphicon glyphicon-volume-up"></span></button>
+    <button class="btn btn-primary btn-lg" onclick="next()"><span class="glyphicon glyphicon-step-forward"></span>
+    </button>
+    <button class="btn btn-primary btn-lg" onclick="dec_vol()"><span class="glyphicon glyphicon-volume-down"></span>
+    </button>
+    <button class="btn btn-primary btn-lg" onclick="inc_vol()"><span class="glyphicon glyphicon-volume-up"></span>
+    </button>
 </div>
 
 
@@ -35,7 +41,7 @@
 
 <div class="row">
     <div class="col-xs-3">
-        <ul class="list-group" id="artists">
+        <ul class="list-group" id="artists" style="z-index: 1;">
         </ul>
     </div>
     <div class="col-xs-3">
@@ -48,8 +54,10 @@
     </div>
 
 
-</div>
 
+</div>
+<ul class="list-group" id="notifications" style="position:fixed; bottom:10px; right: 10px">
+       </ul>
 
 <script>
 var buttonStyle = "btn btn-sm btn-default"
@@ -182,12 +190,14 @@ function getSongs() {
 function inc_vol(){
     var vol_inc_request = new XMLHttpRequest();
     vol_inc_request.open("PUT", document.URL + "volume/up");
+    vol_inc_request.onreadystatechange = responseAction(vol_inc_request);
     vol_inc_request.send()
 }
 
 function dec_vol(){
     var vol_dec_request = new XMLHttpRequest();
     vol_dec_request.open("PUT", document.URL + "volume/down");
+    vol_dec_request.onreadystatechange = responseAction(vol_dec_request);
     vol_dec_request.send()
 }
 
@@ -197,8 +207,9 @@ function playSong() {
     var artist = selectedArtist;
     var album = selectedAlbum;
     var playRequest = new XMLHttpRequest();
-    playRequest.open("PUT", document.URL + "play/" + artist + "/" + album + "/"+ song);
-    playRequest.send();
+    playRequest.open("PUT", document.URL + "songPlay/" + artist + "/" + album + "/"+ song);
+    playRequest.onreadystatechange = responseAction(playRequest);
+	playRequest.send();
 }
 
 function addSong(){
@@ -207,7 +218,8 @@ function addSong(){
     var album = selectedAlbum;
     var artist = selectedArtist;
     var addRequest = new XMLHttpRequest();
-    addRequest.open("PUT", document.URL + "add/" + artist + "/" + album + "/"+ song);
+    addRequest.open("PUT", document.URL + "songAdd/" + artist + "/" + album + "/"+ song);
+	addRequest.onreadystatechange = responseAction(addRequest);
     addRequest.send();
 }
 
@@ -221,12 +233,14 @@ function play() {
 function pause() {
     var pauseRequest = new XMLHttpRequest();
     pauseRequest.open("PUT", document.URL + "pause");
+    pauseRequest.onreadystatechange = responseAction(pauseRequest);
     pauseRequest.send();
 }
 
 function stop() {
     var stopRequest = new XMLHttpRequest();
     stopRequest.open("PUT", document.URL + "stop");
+    stopRequest.onreadystatechange = responseAction(stopRequest);
     stopRequest.send();
 }
 
@@ -240,17 +254,27 @@ function responseAction(request){
     return function(event){
         if(request.readyState == 4){
             if(request.response == "1"){
-                console.log("it worked");
+                addNotification("success", "command was successful");
             }
             else{
-                console.log(request.response);
+                addNotification("danger", "command was not successful");
             }
         }
     };
-
-
-
 }
+
+function addNotification(className, text){
+    var notificationList = document.getElementById("notifications");
+    var notification = document.createElement("li");
+    notification.className = "fade list-group-item list-group-item-" + className;
+    notification.innerText = text;
+    notification.addEventListener("animationend", function(event){
+        var parent = event.target.parentNode;
+        parent.removeChild(event.target);
+        });
+    notificationList.appendChild(notification);
+}
+
 
 
 

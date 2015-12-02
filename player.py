@@ -2,7 +2,6 @@ import vlc
 __author__ = 'Jan'
 
 
-
 class Player:
     def __init__(self):
 

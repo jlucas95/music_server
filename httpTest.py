@@ -5,7 +5,6 @@ import json.encoder as json
 from urllib.request import unquote
 
 __author__ = 'Jan'
-
 ADRESS = ''
 PORT = 80
 
@@ -54,21 +53,14 @@ class handler(BaseHTTPRequestHandler):
             print('could not find')
             self.send_error(404, "File not found")
 
-    put_dict = {
-        "rebuild": collection.rebuild,
-        "play": lambda self: self.resume_song,
-
-    }
-
     def do_PUT(self):
-        # TODO rewrite elifs to function dictionary
         if self.path == "/rebuild":
-            collection.rebuild()
+            self.rebuild()
         elif self.path == "/play":
             self.resume_song()
-        elif self.path.startswith("/play"):
+        elif self.path.startswith("/songPlay"):
             self.play_song()
-        elif self.path.startswith("/add"):
+        elif self.path.startswith("/songAdd"):
             self.add_song()
         elif self.path == "/pause":
             self.pause_song()
@@ -158,6 +150,7 @@ class handler(BaseHTTPRequestHandler):
     def stop_song(self):
         music.stop()
 
+
     def pause_song(self):
         music.pause()
 
@@ -178,6 +171,8 @@ class handler(BaseHTTPRequestHandler):
     def increase_volume(self):
         music.increase_volume()
 
+    def rebuild(self):
+        collection.rebuild()
 
 if __name__ == "__main__":
     print("starting server")
