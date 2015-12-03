@@ -17,6 +17,7 @@ class Player:
     def clearList(self):
         self.mediaList = vlc.MediaList()
         self.player = vlc.MediaPlayer()
+        self.set_volume(self.level)
         self.list_player = vlc.MediaListPlayer()
         self.list_player.set_media_list(self.mediaList)
         self.list_player.set_media_player(self.player)

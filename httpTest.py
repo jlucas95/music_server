@@ -147,17 +147,20 @@ class handler(BaseHTTPRequestHandler):
         # Add the song to the queue
         music.add_song(song.path)
 
-    def stop_song(self):
+    @staticmethod
+    def stop_song():
         music.stop()
 
-
-    def pause_song(self):
+    @staticmethod
+    def pause_song():
         music.pause()
 
-    def resume_song(self):
+    @staticmethod
+    def resume_song():
         music.play()
 
-    def next_song(self):
+    @staticmethod
+    def next_song():
         music.next()
 
     def end(self):
@@ -165,10 +168,12 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b'1')
 
-    def decrease_volume(self):
+    @staticmethod
+    def decrease_volume():
         music.decrease_volume()
 
-    def increase_volume(self):
+    @staticmethod
+    def increase_volume():
         music.increase_volume()
 
     def rebuild(self):

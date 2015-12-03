@@ -100,6 +100,14 @@ class MusicCollection:
                     artist.albums.append(album)
                 album.songs.append(song)
                 collection.artists.append(artist)
+        self.sort()
+
+    def sort(self):
+        self.artists.sort(key=lambda item: item.name)
+        for artist in self.artists:
+            artist.albums.sort(key=lambda album: album.name)
+            for album in artist.albums:
+                album.songs.sort(key=lambda song: song.name)
 
     def rebuild(self):
         self.build(map_songs(rootfolder))
