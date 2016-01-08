@@ -73,6 +73,7 @@ class MusicCollection:
 
     def build(self, songs):
         collection = self
+        collection.artists = []
         for song in songs:
             artist = song.file.get("artist")[0]
             artist = artist[0:1].capitalize() + artist[1:len(artist)]

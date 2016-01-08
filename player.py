@@ -1,4 +1,6 @@
 import vlc
+import threading
+from multiprocessing import Queue
 __author__ = 'Jan'
 
 
@@ -13,6 +15,7 @@ class Player:
         self.list_player.set_media_player(self.player)
         self.level = 80
         self.volume_interval = 5
+        self.pipe = self.monitor()
 
     def clearList(self):
         self.mediaList = vlc.MediaList()
@@ -25,8 +28,6 @@ class Player:
     def add_song(self, song_path):
         song = vlc.Media(song_path)
         self.mediaList.add_media(song)
-        if self.mediaList.count() == 1:
-            self.play()
 
     def play(self):
         self.playing = True
@@ -61,9 +62,27 @@ class Player:
         self.level -= self.volume_interval
         self.set_volume(self.level)
 
+    def _check(self):
+        current_song = self.player.get_media()
+        while True:
+            if self.player.get_media() != current_song:
+                self.pipe.put("1")
+                current_song = self.player.get_media()
+
+    def monitor(self):
+        thread = threading.Thread(target=self._check, daemon=True,)
+        thread.start()
+        return Queue()
 
 
-
-
+if __name__ == "__main__":
+    a = Player()
+    print("made object")
+    a.add_song("music/Aqualung.mp3")
+    print("added a song")
+    a.add_song("music/12 Shimi.mp3")
+    print("added another")
+    a.next()
+    print(a.pipe.get(timeout=3))
 
 

@@ -3,11 +3,13 @@ import collection_reader as cr
 from player import Player
 import json.encoder as json
 from urllib.request import unquote
+from cgi import parse_header, parse_multipart
 
 __author__ = 'Jan'
 ADRESS = ''
 PORT = 80
 
+#TODO Disconnect pages from the handler. Maybe a module per page?
 collection = cr.MusicCollection(cr.map_songs(cr.rootfolder))
 print("collection built")
 
@@ -32,7 +34,21 @@ class handler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "text/css")
                 self.end_headers()
                 self.wfile.write(data.encode())
-        elif self.path.startswith("/font"):
+
+        elif self.path.startswith("/favicon.ico"):
+            self.send_response(200)
+            with open("favicon.ico", "rb") as icon:
+                self.end_headers()
+                self.wfile.write(icon.read())
+
+        elif self.path.startswith("/settings"):
+            with open("settings.html") as file:
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(file.read().encode())
+
+
+        else:
             path = self.path[1:len(self.path)]
             if path.endswith("?"):
                 path = path [0:len(path)-1]
@@ -43,18 +59,19 @@ class handler(BaseHTTPRequestHandler):
                     self.wfile.write(data)
             except OSError:
                 self.send_error(404, "File not found")
-        elif self.path.startswith("/favicon.ico"):
-            self.send_response(200)
-            with open("favicon.ico", "rb") as icon:
-                self.end_headers()
-                self.wfile.write(icon.read())
 
-        else:
-            print('could not find')
-            self.send_error(404, "File not found")
+    def do_POST(self):
+        print('got post')
+
+        if self.path.startswith("/settings"):
+            self.song_upload()
+
+
+
+
 
     def do_PUT(self):
-        if self.path == "/rebuild":
+        if self.path == "/settings/rebuild":
             self.rebuild()
         elif self.path == "/play":
             self.resume_song()
@@ -133,6 +150,7 @@ class handler(BaseHTTPRequestHandler):
         music.clearList()
         # Add the song to the queue
         music.add_song(song.path)
+        music.play()
 
     def add_song(self):
         # Get stuff out of the URL
@@ -146,6 +164,29 @@ class handler(BaseHTTPRequestHandler):
         song = album.find_song(song)
         # Add the song to the queue
         music.add_song(song.path)
+
+    def song_upload(self):
+        size = self.headers["Content-length"]
+        self.send_response(200)
+        self.wfile.write(b'0')
+        postvars = self.parse_headers()
+        song = postvars["song"][0]
+        filename = postvars["filename"][0].decode('utf-8')
+        file = open("music/"+ filename, mode='wb')
+
+        file.write(song)
+        file.close()
+        self.rebuild()
+        self.wfile.write(b'1')
+
+    def parse_headers(self):
+        ctype, pdict = parse_header(self.headers['content-type'])
+        pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
+        if ctype == 'multipart/form-data':
+            postvars = parse_multipart(self.rfile, pdict)
+        else:
+            postvars = {}
+        return postvars
 
     @staticmethod
     def stop_song():

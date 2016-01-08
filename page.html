@@ -34,6 +34,11 @@
     <button class="btn btn-primary btn-lg" onclick="inc_vol()"><span class="glyphicon glyphicon-volume-up"></span>
     </button>
 </div>
+	<a href="/settings" >
+		<button class="btn btn-primary">
+			<span class="glyphicon glyphicon-wrench"></span>
+		</button>
+	</a>
 
 
 <hr>
@@ -56,8 +61,7 @@
 
 
 </div>
-<ul class="list-group" id="notifications" style="position:fixed; bottom:10px; right: 10px">
-       </ul>
+
 
 <script>
 var buttonStyle = "btn btn-sm btn-default"
@@ -263,22 +267,8 @@ function responseAction(request){
     };
 }
 
-function addNotification(className, text){
-    var notificationList = document.getElementById("notifications");
-    var notification = document.createElement("li");
-    notification.className = "fade list-group-item list-group-item-" + className;
-    notification.innerText = text;
-    notification.addEventListener("animationend", function(event){
-        var parent = event.target.parentNode;
-        parent.removeChild(event.target);
-        });
-    notificationList.appendChild(notification);
-}
-
-
-
-
 
 </script>
+<script src="js/notifications.js"></script>
 </body>
 </html>
