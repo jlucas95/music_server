@@ -7,7 +7,7 @@ from cgi import parse_header, parse_multipart
 
 __author__ = 'Jan'
 ADRESS = ''
-PORT = 80
+PORT = 8080
 
 #TODO Disconnect pages from the handler. Maybe a module per page?
 collection = cr.MusicCollection(cr.map_songs(cr.rootfolder))
@@ -17,6 +17,19 @@ music = Player()
 
 
 class handler(BaseHTTPRequestHandler):
+
+    getDict = {
+        "/artists": lambda self: self.send_artists(),
+        "/albums": lambda self: self.send_albums(),
+        "/songs": lambda self: self.send_songs(),
+        "/": lambda self:  self.standard_response(),
+        "/css": lambda self: self.send_css(),
+        "/favicon.ico": lambda self: self.send_icon(),
+        "/settings": lambda self: self.send_settings(),
+        "/fonts": lambda self: self.send_etc(),
+        "/js": lambda self: self.send_etc()
+    }
+
     def do_GET(self):
         if self.path == "/artists":
             self.send_artists()
@@ -27,48 +40,21 @@ class handler(BaseHTTPRequestHandler):
         elif self.path == "/":
             self.standard_response()
         elif self.path.startswith("/css"):
-            path = self.path[1:len(self.path)]
-            with open(path) as file:
-                data = file.read()
-                self.send_response(200)
-                self.send_header("Content-Type", "text/css")
-                self.end_headers()
-                self.wfile.write(data.encode())
-
+            self.send_css()
         elif self.path.startswith("/favicon.ico"):
-            self.send_response(200)
-            with open("favicon.ico", "rb") as icon:
-                self.end_headers()
-                self.wfile.write(icon.read())
-
+            self.send_icon()
         elif self.path.startswith("/settings"):
-            with open("settings.html") as file:
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(file.read().encode())
-
-
-        else:
-            path = self.path[1:len(self.path)]
-            if path.endswith("?"):
-                path = path [0:len(path)-1]
-            try:
-                with open(path, "rb") as file:
-                    data = file.read()
-                    self.send_response(200)
-                    self.wfile.write(data)
-            except OSError:
-                self.send_error(404, "File not found")
+            self.send_settings()
+        elif self.path.startswith("/fonts"):
+            self.send_etc()
+        elif self.path.startswith("/js"):
+            self.send_etc()
 
     def do_POST(self):
         print('got post')
 
         if self.path.startswith("/settings"):
             self.song_upload()
-
-
-
-
 
     def do_PUT(self):
         if self.path == "/settings/rebuild":
@@ -95,7 +81,42 @@ class handler(BaseHTTPRequestHandler):
         with open("page.html") as page:
             data = page.read()
             self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
             self.wfile.write(data.encode())
+
+    def send_css(self):
+        path = self.path[1:len(self.path)]
+        with open(path) as file:
+            data = file.read()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/css")
+            self.end_headers()
+            self.wfile.write(data.encode())
+
+    def send_icon(self):
+        self.send_response(200)
+        with open("favicon.ico", "rb") as icon:
+            self.end_headers()
+            self.wfile.write(icon.read())
+
+    def send_settings(self):
+        with open("settings.html") as file:
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(file.read().encode())
+
+    def send_etc(self):
+        path = self.path[1:len(self.path)]
+        if path.endswith("?"):
+            path = path [0:len(path)-1]
+        try:
+            with open(path, "rb") as file:
+                data = file.read()
+                self.send_response(200)
+                self.wfile.write(data)
+        except OSError:
+            self.send_error(404, "File not found")
 
     def send_artists(self):
         data = [x.name for x in collection.artists]
