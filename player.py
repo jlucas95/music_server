@@ -1,5 +1,6 @@
 import vlc
 import threading
+import time
 from multiprocessing import Queue
 __author__ = 'Jan'
 
@@ -65,6 +66,7 @@ class Player:
     def _check(self):
         current_song = self.player.get_media()
         while True:
+            time.sleep(1)
             if self.player.get_media() != current_song:
                 self.pipe.put("1")
                 current_song = self.player.get_media()
